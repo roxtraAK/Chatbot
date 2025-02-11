@@ -1,9 +1,5 @@
-import { createContext, useContext } from "react";
-import { ResponseContextType } from "./Content";
-
-export const ResponseContext = createContext<ResponseContextType | undefined>(
-  undefined
-);
+import { useContext } from "react";
+import { ResponseContext } from "../context/ResponseContext";
 
 export default function useResponseContext() {
   const context = useContext(ResponseContext);

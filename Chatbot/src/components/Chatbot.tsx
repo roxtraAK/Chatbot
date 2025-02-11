@@ -3,31 +3,41 @@ import { useState } from "react";
 import SendIcon from "@mui/icons-material/Send";
 import Textarea from "@mui/joy/Textarea";
 import { handleCompletion } from "../KI/ai";
-import useResponseContext from "./ResponseContext";
+import useResponseContext from "../hooks/ResponseContext";
 
 export default function Chatbot() {
+  const { response, setResponse } = useResponseContext();
   let [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const context = useResponseContext();
+  const sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
 
-  const handleGenerateResponse = async () => {
+  const typeMessage = async (text: string) => {
+    for (let i = 0; i < text.length; i++) {
+      await sleep(10);
+      setResponse((prev: string) => prev + text[i]);
+    }
+  };
+
+  const handleGenerateResponse = async (): Promise<void> => {
     if (!message.trim()) return;
+
     setIsLoading(true);
-
     try {
-      const response = await handleCompletion(message);
-      setMessage("");
-
-      if (response && response.content) {
-        for (let i = 0; i < response.content.length; i++) {
-          context?.setResponse(response.content[i]);
+      const apiResponse = await handleCompletion(message);
+      if (apiResponse && apiResponse.content) {
+        for (let i = 0; i < apiResponse.content.length; i++) {
+          const text = apiResponse.content[i];
+          if (text) await typeMessage(text);
         }
       }
+      setMessage("");
     } catch (error) {
-      console.error("Error generating response:", error);
-      context?.setResponse(
-        "Sorry, there was an error with genrating the response."
+      console.error("Fehler beim Generieren der Antwort:", error);
+      setResponse(
+        (prev: string) => prev + "\n\nFehler beim Generieren der Antwort."
       );
     } finally {
       setIsLoading(false);
@@ -51,7 +61,7 @@ export default function Chatbot() {
       >
         <h1>AI Chatbot</h1>
       </Box>
-      {!context?.response ? (
+      {!response ? (
         <Box
           sx={{
             display: "flex",
@@ -69,24 +79,26 @@ export default function Chatbot() {
         <Textarea
           sx={{
             width: "100%",
-            height: "90%",
+            height: "70vh",
+            maxHeight: "80vh",
             backgroundColor: "transparent",
-            overflow: "auto",
+            overflowY: "auto",
             maxWidth: "100%",
             color: "white",
             "& textarea": {
               color: "white",
+              overflowY: "auto",
             },
           }}
           variant="plain"
           disabled
-          value={context?.response}
-          onChange={(e) => context?.setResponse(e.target.value)}
+          value={response}
+          onChange={(e) => setResponse(e.target.value)}
         />
       )}
       <Box
         sx={
-          !context?.response
+          !response
             ? {
                 display: "flex",
                 justifyContent: "center",
@@ -129,7 +141,7 @@ export default function Chatbot() {
                     marginRight: "2px",
                     marginBottom: "10px",
                   }}
-                  onClick={handleGenerateResponse}
+                  onClick={() => handleGenerateResponse()}
                   edge="end"
                   disabled={isLoading}
                 >

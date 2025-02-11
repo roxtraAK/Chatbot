@@ -1,8 +1,13 @@
 import { Box, Button, Tooltip } from "@mui/material";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import useResponseContext from "../hooks/ResponseContext";
 
 export function Sidebar() {
-  const handleNewChat = () => {};
+  const { response, setResponse } = useResponseContext();
+
+  const handleNewChat = () => {
+    setResponse("");
+  };
 
   return (
     <Box
@@ -23,7 +28,7 @@ export function Sidebar() {
       <Button sx={{ marginTop: -2, paddingLeft: 5 }} color="inherit">
         <Tooltip title="Neuer Chat">
           <EditNoteIcon
-            onClick={handleNewChat}
+            onClick={() => handleNewChat()}
             sx={{ cursor: "pointer", fontSize: 32 }}
           />
         </Tooltip>

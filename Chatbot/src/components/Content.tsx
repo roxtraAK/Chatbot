@@ -1,12 +1,12 @@
 import { Box } from "@mui/material";
 import { Sidebar } from "./Sidebar";
 import Chatbot from "./Chatbot";
-import { ResponseContext } from "./ResponseContext";
+import { ResponseContext } from "../context/ResponseContext";
 import { useState } from "react";
 
 export interface ResponseContextType {
   response: string;
-  setResponse: (response: string) => void;
+  setResponse: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function Content() {
@@ -14,7 +14,10 @@ export default function Content() {
 
   return (
     <ResponseContext.Provider value={{ response, setResponse }}>
-      <Box display="flex" sx={{ width: "100vw", height: "100vh" }}>
+      <Box
+        display="flex"
+        sx={{ overflow: "hidden", width: "100vw", height: "100vh" }}
+      >
         <Box sx={{ width: "250px", flexShrink: 0, backgroundColor: "#f4f4f4" }}>
           <Sidebar />
         </Box>
