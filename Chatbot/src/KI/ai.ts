@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { ChatCompletionMessage } from "openai/resources/index.mjs";
 
 const API_KEY =
-  "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";
+  "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";
 
 const openai = new OpenAI({
   apiKey: API_KEY || "",
@@ -16,7 +16,7 @@ export async function handleCompletion(
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       temperature: 0,
-      max_tokens: 500,
+      max_tokens: 1000,
       messages: [
         {
           role: "system",
@@ -24,8 +24,7 @@ export async function handleCompletion(
             {
               type: "text",
               text: `
-                          Your are a professional bodybuilder and can answer questions about training, nutrition, supplements and performance enhancing drugs. If yo
-                          cant answer the question, please let the user know. 
+                          You can answer every Question you get asked about the topic you are an expert in.
             
                         `,
             },

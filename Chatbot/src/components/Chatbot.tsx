@@ -3,39 +3,32 @@ import { useState } from "react";
 import SendIcon from "@mui/icons-material/Send";
 import Textarea from "@mui/joy/Textarea";
 import { handleCompletion } from "../KI/ai";
+import useResponseContext from "./ResponseContext";
 
 export default function Chatbot() {
   let [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [response, setResponseMessage] = useState<string>("");
 
-  const sleep = (ms: number) => {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  };
-
-  const typeMessage = async (text: string) => {
-    for (let i = 0; i < text.length; i++) {
-      await sleep(10);
-      setResponseMessage((prevResponse: string) => prevResponse + text[i]);
-    }
-    setResponseMessage("\n");
-  };
+  const context = useResponseContext();
 
   const handleGenerateResponse = async () => {
+    if (!message.trim()) return;
     setIsLoading(true);
+
     try {
       const response = await handleCompletion(message);
+      setMessage("");
+
       if (response && response.content) {
         for (let i = 0; i < response.content.length; i++) {
-          const text = response.content[i];
-          if (text) {
-            await typeMessage(text);
-          }
+          context?.setResponse(response.content[i]);
         }
       }
     } catch (error) {
       console.error("Error generating response:", error);
-      setResponseMessage("Sorry, there was an error generating the response.");
+      context?.setResponse(
+        "Sorry, there was an error with genrating the response."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +51,7 @@ export default function Chatbot() {
       >
         <h1>AI Chatbot</h1>
       </Box>
-      {!response ? (
+      {!context?.response ? (
         <Box
           sx={{
             display: "flex",
@@ -67,7 +60,7 @@ export default function Chatbot() {
             height: "100vh",
             textAlign: "center",
             fontSize: "32px",
-            fontFamily: "fantasy",
+            fontFamily: "arial",
           }}
         >
           Stellen sie eine Frage
@@ -78,6 +71,7 @@ export default function Chatbot() {
             width: "100%",
             height: "90%",
             backgroundColor: "transparent",
+            overflow: "auto",
             maxWidth: "100%",
             color: "white",
             "& textarea": {
@@ -86,13 +80,13 @@ export default function Chatbot() {
           }}
           variant="plain"
           disabled
-          value={response}
-          onChange={(e) => setResponseMessage(e.target.value)}
+          value={context?.response}
+          onChange={(e) => context?.setResponse(e.target.value)}
         />
       )}
       <Box
         sx={
-          !response
+          !context?.response
             ? {
                 display: "flex",
                 justifyContent: "center",
