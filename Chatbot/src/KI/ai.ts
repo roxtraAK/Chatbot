@@ -9,7 +9,7 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true,
 });
 
-export async function handleCompletion(
+export async function handleTextCompletion(
   inputMessage: string
 ): Promise<ChatCompletionMessage | undefined> {
   try {
@@ -25,7 +25,7 @@ export async function handleCompletion(
               type: "text",
               text: `
                           You can answer every Question you get asked about the topic you are an expert in.
-            
+                          answer in german.
                         `,
             },
           ],
@@ -35,7 +35,7 @@ export async function handleCompletion(
           content: [
             {
               type: "text",
-              text: `tell me everyhing you know about ${inputMessage}`,
+              text: `tell me everyhing you know about ${inputMessage} in german`,
             },
           ],
         },
@@ -43,6 +43,25 @@ export async function handleCompletion(
     });
 
     return response.choices[0].message;
+  } catch (ex) {
+    console.error(ex);
+  }
+
+  return undefined;
+}
+
+export async function handleImageCompletion(
+  inputMessage: string
+): Promise<string | undefined> {
+  try {
+    const response = await openai.images.generate({
+      model: "dall-e-2",
+      prompt: inputMessage,
+      n: 1,
+      size: "1024x1024",
+    });
+
+    return response.data[0].url;
   } catch (ex) {
     console.error(ex);
   }

@@ -1,12 +1,29 @@
 import { Box, Button, Tooltip } from "@mui/material";
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import useResponseContext from "../hooks/ResponseContext";
+import ImageIcon from "@mui/icons-material/Image";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import { useResponseContext } from "../hooks/useResponseContext";
+import { useAIModeContext } from "../hooks/useAIModeContext";
 
 export function Sidebar() {
-  const { response, setResponse } = useResponseContext();
+  const { setResponse } = useResponseContext();
+  const { isImageActive, isTextActive, setIsImageActive, setIsTextActive } =
+    useAIModeContext();
 
   const handleNewChat = () => {
     setResponse("");
+  };
+
+  const handleModeChange = (mode: "image" | "text") => {
+    if (mode === "image") {
+      setIsImageActive(true);
+      console.log("Image active");
+      setIsTextActive(false);
+    } else if (mode === "text") {
+      setIsTextActive(true);
+      console.log("text active");
+      setIsImageActive(false);
+    }
   };
 
   return (
@@ -20,19 +37,68 @@ export function Sidebar() {
         left: 0,
         display: "flex",
         flexDirection: "column",
-        alignItems: "end",
         padding: "15px",
         color: "white",
       }}
     >
-      <Button sx={{ marginTop: -2, paddingLeft: 5 }} color="inherit">
-        <Tooltip title="Neuer Chat">
-          <EditNoteIcon
-            onClick={() => handleNewChat()}
-            sx={{ cursor: "pointer", fontSize: 32 }}
-          />
-        </Tooltip>
-      </Button>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <Box sx={{ display: "flex" }}>
+          <Button
+            color="inherit"
+            disabled={!isTextActive}
+            onClick={() => handleModeChange("image")}
+            sx={{
+              marginRight: -3,
+              ml: -2,
+              "& .MuiTouchRipple-root": {
+                transform: "scale(0.6, 100%)",
+              },
+              "&.Mui-disabled": {
+                color: "#C0C0C0",
+                opacity: 0.4,
+              },
+            }}
+          >
+            <Tooltip title="Image AI">
+              <ImageIcon sx={{ fontSize: 28 }} />
+            </Tooltip>
+          </Button>
+          <Button
+            color="inherit"
+            disabled={!isImageActive}
+            onClick={() => handleModeChange("text")}
+            sx={{
+              "& .MuiTouchRipple-root": {
+                transform: "scale(0.6, 100%)",
+              },
+              "&.Mui-disabled": {
+                color: "#C0C0C0",
+                opacity: 0.4,
+              },
+            }}
+          >
+            <Tooltip title="Text AI">
+              <FormatQuoteIcon sx={{ fontSize: 28 }} />
+            </Tooltip>
+          </Button>
+        </Box>
+
+        <Button color="inherit">
+          <Tooltip title="Neuer Chat">
+            <EditNoteIcon
+              onClick={() => handleNewChat()}
+              sx={{ cursor: "pointer", fontSize: 28 }}
+            />
+          </Tooltip>
+        </Button>
+      </Box>
     </Box>
   );
 }

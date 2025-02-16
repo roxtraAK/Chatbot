@@ -2,11 +2,13 @@ import { Box, IconButton, InputAdornment, TextField } from "@mui/material";
 import { useState } from "react";
 import SendIcon from "@mui/icons-material/Send";
 import Textarea from "@mui/joy/Textarea";
-import { handleCompletion } from "../KI/ai";
-import useResponseContext from "../hooks/ResponseContext";
+import { handleTextCompletion, handleImageCompletion } from "../KI/ai";
+import { useResponseContext } from "../hooks/useResponseContext";
+import { useAIModeContext } from "../hooks/useAIModeContext";
 
 export default function Chatbot() {
   const { response, setResponse } = useResponseContext();
+  const { isTextActive } = useAIModeContext();
   let [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -16,24 +18,54 @@ export default function Chatbot() {
 
   const typeMessage = async (text: string) => {
     for (let i = 0; i < text.length; i++) {
-      await sleep(10);
+      await sleep(5);
       setResponse((prev: string) => prev + text[i]);
+      console.log(text[i]);
     }
   };
 
-  const handleGenerateResponse = async (): Promise<void> => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key == "Enter") {
+      isTextActive
+        ? handleTextGenerateResponse()
+        : handleImageGenerateResponse();
+    }
+  };
+
+  const handleImageGenerateResponse = async (): Promise<void> => {
     if (!message.trim()) return;
 
     setIsLoading(true);
     try {
-      const apiResponse = await handleCompletion(message);
+      const apiResponse = await handleImageCompletion(message);
+      if (apiResponse) {
+        setMessage("");
+        setResponse((prev) => prev + apiResponse + "\n\n");
+      }
+    } catch (error) {
+      console.error("Fehler beim Generieren des Bilds: ", error);
+      setResponse(
+        (prev: string) => prev + "\n\nFehler beim Generieren des Bilds."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTextGenerateResponse = async (): Promise<void> => {
+    if (!message.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const apiResponse = await handleTextCompletion(message);
       if (apiResponse && apiResponse.content) {
+        setMessage("");
         for (let i = 0; i < apiResponse.content.length; i++) {
           const text = apiResponse.content[i];
           if (text) await typeMessage(text);
         }
+        setResponse((prev: string) => prev + "\n\n\n");
       }
-      setMessage("");
     } catch (error) {
       console.error("Fehler beim Generieren der Antwort:", error);
       setResponse(
@@ -42,6 +74,29 @@ export default function Chatbot() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const renderResponseWithImage = (text: string) => {
+    const regex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp|svg))/i;
+    const match = text.match(regex);
+    if (match) {
+      return (
+        <Box
+          sx={{
+            color: "white",
+            minWidth: "100%",
+            maxHeight: "70vh",
+            display: "flex",
+            alignItems: "center",
+            flexDirection: "column",
+            marginBottom: "10px",
+          }}
+        >
+          <img src={text} style={{ height: "650px", width: "1024px" }} />
+        </Box>
+      );
+    }
+    return <span>Das Bild konnte nichtz generiert werden</span>;
   };
 
   return (
@@ -73,28 +128,36 @@ export default function Chatbot() {
             fontFamily: "arial",
           }}
         >
-          Stellen sie eine Frage
+          {isTextActive
+            ? "Stellen sie eine Frage"
+            : "Lassen sie sich ein Bild generieren"}
         </Box>
       ) : (
-        <Textarea
-          sx={{
-            width: "100%",
-            height: "70vh",
-            maxHeight: "80vh",
-            backgroundColor: "transparent",
-            overflowY: "auto",
-            maxWidth: "100%",
-            color: "white",
-            "& textarea": {
-              color: "white",
-              overflowY: "auto",
-            },
-          }}
-          variant="plain"
-          disabled
-          value={response}
-          onChange={(e) => setResponse(e.target.value)}
-        />
+        <>
+          {isTextActive ? (
+            <Textarea
+              sx={{
+                width: "100%",
+                minHeight: "70vh",
+                maxHeight: "80vh",
+                backgroundColor: "transparent",
+                overflowY: "scroll",
+                maxWidth: "100%",
+                color: "white",
+                "& textarea": {
+                  color: "white",
+                  resize: "none",
+                },
+              }}
+              variant="plain"
+              disabled
+              value={response}
+              onChange={(e) => setResponse(e.target.value)}
+            />
+          ) : (
+            renderResponseWithImage(response)
+          )}
+        </>
       )}
       <Box
         sx={
@@ -116,7 +179,6 @@ export default function Chatbot() {
         <TextField
           id="outlined-basic"
           type="text"
-          multiline={true}
           value={message}
           variant="standard"
           focused={true}
@@ -125,13 +187,16 @@ export default function Chatbot() {
             display: "flex",
             alignItems: "center",
             width: "50%",
+            fontSize: "24px",
             marginTop: "10px",
             color: "white",
-            "& textarea": {
+            "& input": {
               color: "white",
+              fontSize: "18px",
             },
-          }} // Set text color to white
+          }}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e: React.KeyboardEvent) => handleKeyDown(e)}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -141,7 +206,11 @@ export default function Chatbot() {
                     marginRight: "2px",
                     marginBottom: "10px",
                   }}
-                  onClick={() => handleGenerateResponse()}
+                  onClick={() => {
+                    isTextActive
+                      ? handleTextGenerateResponse()
+                      : handleImageGenerateResponse();
+                  }}
                   edge="end"
                   disabled={isLoading}
                 >
