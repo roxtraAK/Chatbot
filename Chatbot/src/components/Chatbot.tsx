@@ -2,9 +2,10 @@ import { Box, IconButton, InputAdornment, TextField } from "@mui/material";
 import { useState } from "react";
 import SendIcon from "@mui/icons-material/Send";
 import Textarea from "@mui/joy/Textarea";
-import { handleTextCompletion, handleImageCompletion } from "../KI/ai";
 import { useResponseContext } from "../hooks/useResponseContext";
 import { useAIModeContext } from "../hooks/useAIModeContext";
+import { handleImageGenerateResponse } from "../Events/handleImageResponse";
+import { handleTextGenerateResponse } from "../Events/handleTextResponse";
 
 export default function Chatbot() {
   const { response, setResponse } = useResponseContext();
@@ -27,52 +28,19 @@ export default function Chatbot() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key == "Enter") {
       isTextActive
-        ? handleTextGenerateResponse()
-        : handleImageGenerateResponse();
-    }
-  };
-
-  const handleImageGenerateResponse = async (): Promise<void> => {
-    if (!message.trim()) return;
-
-    setIsLoading(true);
-    try {
-      const apiResponse = await handleImageCompletion(message);
-      if (apiResponse) {
-        setMessage("");
-        setResponse((prev) => prev + apiResponse + "\n\n");
-      }
-    } catch (error) {
-      console.error("Fehler beim Generieren des Bilds: ", error);
-      setResponse(
-        (prev: string) => prev + "\n\nFehler beim Generieren des Bilds."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleTextGenerateResponse = async (): Promise<void> => {
-    if (!message.trim()) return;
-
-    setIsLoading(true);
-    try {
-      const apiResponse = await handleTextCompletion(message);
-      if (apiResponse && apiResponse.content) {
-        setMessage("");
-        for (let i = 0; i < apiResponse.content.length; i++) {
-          const text = apiResponse.content[i];
-          if (text) await typeMessage(text);
-        }
-        setResponse((prev: string) => prev + "\n\n\n");
-      }
-    } catch (error) {
-      console.error("Fehler beim Generieren der Antwort:", error);
-      setResponse(
-        (prev: string) => prev + "\n\nFehler beim Generieren der Antwort."
-      );
-    } finally {
-      setIsLoading(false);
+        ? handleTextGenerateResponse({
+            message,
+            setMessage,
+            setResponse,
+            setIsLoading,
+            typeMessage,
+          })
+        : handleImageGenerateResponse({
+            message,
+            setMessage,
+            setResponse,
+            setIsLoading,
+          });
     }
   };
 
@@ -92,11 +60,10 @@ export default function Chatbot() {
             marginBottom: "10px",
           }}
         >
-          <img src={text} style={{ height: "650px", width: "1024px" }} />
+          <img src={text} style={{ minHeight: "650px", maxWidth: "100%" }} />
         </Box>
       );
     }
-    return <span>Das Bild konnte nichtz generiert werden</span>;
   };
 
   return (
@@ -208,8 +175,19 @@ export default function Chatbot() {
                   }}
                   onClick={() => {
                     isTextActive
-                      ? handleTextGenerateResponse()
-                      : handleImageGenerateResponse();
+                      ? handleTextGenerateResponse({
+                          message,
+                          setMessage,
+                          setResponse,
+                          setIsLoading,
+                          typeMessage,
+                        })
+                      : handleImageGenerateResponse({
+                          message,
+                          setMessage,
+                          setResponse,
+                          setIsLoading,
+                        });
                   }}
                   edge="end"
                   disabled={isLoading}

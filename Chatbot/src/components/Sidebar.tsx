@@ -17,11 +17,9 @@ export function Sidebar() {
   const handleModeChange = (mode: "image" | "text") => {
     if (mode === "image") {
       setIsImageActive(true);
-      console.log("Image active");
       setIsTextActive(false);
     } else if (mode === "text") {
       setIsTextActive(true);
-      console.log("text active");
       setIsImageActive(false);
     }
   };
