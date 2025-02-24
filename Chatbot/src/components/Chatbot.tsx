@@ -60,7 +60,7 @@ export default function Chatbot() {
             marginBottom: "10px",
           }}
         >
-          <img src={text} style={{ minHeight: "650px", maxWidth: "100%" }} />
+          <img src={text} style={{ minHeight: "500px", maxWidth: "100%" }} />
         </Box>
       );
     }
